@@ -52,38 +52,46 @@ public class RivianLabelFromJson {
 
             // -------- Draw Row 2: 2 columns (left 2/3, right 1/3) --------
                 drawCustomGrid(cs, margin, pageHeight - margin - rowHeights[0] - rowHeights[1], new float[]{2*colWidth, colWidth}, rowHeights[1]);
-        // Custom rendering for P/N with value in larger font and shifted right
+        // Custom rendering for P/N with value in larger font, left aligned, and (P) below
         float pnFontSize = 0.12f * INCH; // 8.64 pts
         float pnBlockX = col1X;
         float pnBlockY = pageHeight - margin - rowHeights[0] - rowHeights[1];
         float pnBlockW = 2*colWidth;
         float pnBlockH = rowHeights[1];
-        float pnPadding = 18f; // more right
+        float pnPaddingLeft = 0.25f * INCH; // 0.25 inch gap to left of barcode
+        float pnLabelPadding = 8f; // move P/N label a little left
         float pnLineHeight = 6 + 2;
 
-        // Draw label 'P/N'
-        cs.beginText();
-        cs.setFont(PDType1Font.HELVETICA, 6);
-        cs.newLineAtOffset(pnBlockX + pnPadding, pnBlockY + pnBlockH - pnLineHeight - 3f);
-        cs.showText("P/N");
-        cs.endText();
 
-        // Draw value in larger font, shifted right
-        cs.beginText();
-        cs.setFont(PDType1Font.HELVETICA_BOLD, pnFontSize);
-        cs.newLineAtOffset(pnBlockX + pnPadding + 10, pnBlockY + pnBlockH - 2*pnLineHeight - 5f);
-        cs.showText(root.get("partNumber").asText());
-        cs.endText();
+    // Draw 'P/N' and part number value on the same line, with part number centered and larger
+    float pnValueGap = 60f; // increased gap to move part number to center
+    float pnTextY = pnBlockY + pnBlockH - pnLineHeight - 3f;
+    float pnValueFontSize = 0.18f * INCH; // increase size to 13 pts
+    cs.beginText();
+    cs.setFont(PDType1Font.HELVETICA, 8); // unbold P/N
+    cs.newLineAtOffset(pnBlockX + pnLabelPadding, pnTextY);
+    cs.showText("P/N");
+    cs.setFont(PDType1Font.HELVETICA_BOLD, pnValueFontSize);
+    cs.newLineAtOffset(pnValueGap, -10f); // move part number value 10 pts down
+    cs.showText(root.get("partNumber").asText());
+    cs.endText();
 
-        // Draw barcode for part number
+    // Draw (P) just below P/N, bold
+    cs.beginText();
+    cs.setFont(PDType1Font.HELVETICA_BOLD, 7);
+    cs.newLineAtOffset(pnBlockX + pnLabelPadding, pnTextY - pnLineHeight - 2f);
+    cs.showText("(P)");
+    cs.endText();
+
+        // Draw barcode for part number with 0.25 inch gap to left
         String pnBarcodeData = root.get("partNumber").asText();
         float pnBarcodeHeight = 0.5f * INCH;
-        float pnBarcodeWidth = pnBlockW - 2*pnPadding - 2*0.25f*INCH;
+        float pnBarcodeWidth = pnBlockW - pnPaddingLeft - 2*0.25f*INCH;
         BitMatrix pnMatrix = new MultiFormatWriter().encode(pnBarcodeData, BarcodeFormat.CODE_128,
             (int)pnBarcodeWidth, (int)pnBarcodeHeight);
         BufferedImage pnImage = MatrixToImageWriter.toBufferedImage(pnMatrix);
         PDImageXObject pnPdImage = PDImageXObject.createFromByteArray(doc, toByteArray(pnImage), "barcode");
-        cs.drawImage(pnPdImage, pnBlockX + pnPadding, pnBlockY + 3f, pnBarcodeWidth, pnBarcodeHeight);
+        cs.drawImage(pnPdImage, pnBlockX + pnPaddingLeft, pnBlockY + 3f, pnBarcodeWidth, pnBarcodeHeight);
 
         // Custom rendering for QTY with value in larger font
         float qtyFontSize = 0.12f * INCH; // 8.64 pts
@@ -95,18 +103,25 @@ public class RivianLabelFromJson {
         float lineHeight = 6 + 2;
 
 
-    // Draw label 'QTY'
+
+    // Draw 'QTY' and quantity value on the same line
+    float qtyValueFontSize = 9f;
+    float qtyValueGap = 18f; // gap between QTY and value
+    float qtyTextY = qtyBlockY + qtyBlockH - lineHeight - padding;
     cs.beginText();
     cs.setFont(PDType1Font.HELVETICA, 6);
-    cs.newLineAtOffset(qtyBlockX + padding + 10, qtyBlockY + qtyBlockH - lineHeight - padding);
+    cs.newLineAtOffset(qtyBlockX + padding + 10, qtyTextY);
     cs.showText("QTY");
+    cs.setFont(PDType1Font.HELVETICA_BOLD, qtyValueFontSize);
+    cs.newLineAtOffset(qtyValueGap, 0);
+    cs.showText(root.get("quantity").asText());
     cs.endText();
 
-    // Draw value in larger font, shifted right
+    // Draw (Q) just below QTY, bold
     cs.beginText();
-    cs.setFont(PDType1Font.HELVETICA_BOLD, qtyFontSize);
-    cs.newLineAtOffset(qtyBlockX + padding + 20, qtyBlockY + qtyBlockH - 2*lineHeight - padding - 2);
-    cs.showText(root.get("quantity").asText());
+    cs.setFont(PDType1Font.HELVETICA_BOLD, 7);
+    cs.newLineAtOffset(qtyBlockX + padding + 10, qtyTextY - lineHeight - 2f);
+    cs.showText("(Q)");
     cs.endText();
 
         // Draw barcode for quantity
