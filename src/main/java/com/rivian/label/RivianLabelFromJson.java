@@ -45,8 +45,10 @@ public class RivianLabelFromJson {
 
             // -------- Draw Row 1: 3 columns --------
             drawGrid(cs, margin, pageHeight - margin - rowHeights[0], pageWidth - 2*margin, rowHeights[0], 3);
-            drawAddress(cs, root.get("ship_from"), "Ship From", col1X, pageHeight - margin - rowHeights[0], colWidth, rowHeights[0], 7);
-            drawAddress(cs, root.get("ship_to"), "Ship To", col2X, pageHeight - margin - rowHeights[0], colWidth, rowHeights[0], 9);
+            // Draw Ship From with font size 0.08 inches (5.76 pts)
+            drawAddress(cs, root.get("ship_from"), "Ship From", col1X, pageHeight - margin - rowHeights[0], colWidth, rowHeights[0], (int)(0.08f * INCH));
+            // Draw Ship To with font size 0.10 inches (7.2 pts)
+            drawAddress(cs, root.get("ship_to"), "Ship To", col2X, pageHeight - margin - rowHeights[0], colWidth, rowHeights[0], (int)(0.10f * INCH));
         drawQRCode(cs, doc, root.get("qr_code").get("encoded_string").asText(),
             col3X + 20, pageHeight - margin - rowHeights[0] + 10, 0.75f*INCH, 0.75f*INCH);
 
@@ -105,15 +107,15 @@ public class RivianLabelFromJson {
 
 
     // Draw 'QTY' and quantity value on the same line
-    float qtyValueFontSize = 9f;
-    float qtyValueGap = 18f; // gap between QTY and value
+    float qtyValueFontSize = 13f; // larger font size
+    float qtyValueGap = 28f; // move value further right
     float qtyTextY = qtyBlockY + qtyBlockH - lineHeight - padding;
     cs.beginText();
     cs.setFont(PDType1Font.HELVETICA, 6);
     cs.newLineAtOffset(qtyBlockX + padding + 10, qtyTextY);
     cs.showText("QTY");
     cs.setFont(PDType1Font.HELVETICA_BOLD, qtyValueFontSize);
-    cs.newLineAtOffset(qtyValueGap, 0);
+    cs.newLineAtOffset(qtyValueGap, -8f); // move value 8 pts down
     cs.showText(root.get("quantity").asText());
     cs.endText();
 
@@ -136,19 +138,198 @@ public class RivianLabelFromJson {
 
             // -------- Draw Row 3: 2 columns --------
                 drawCustomGrid(cs, margin, pageHeight - margin - rowHeights[0] - rowHeights[1] - rowHeights[2], new float[]{2*colWidth, colWidth}, rowHeights[2]);
-            drawText(cs, "Description", root.get("partDescription").asText(),
-                    col1X, pageHeight - margin - rowHeights[0] - rowHeights[1] - rowHeights[2], 2*colWidth, rowHeights[2], 6);
-            drawPoMiscBlock(cs, root, col3X, pageHeight - margin - rowHeights[0] - rowHeights[1] - rowHeights[2],
-                    colWidth, rowHeights[2], 6);
+        // Custom rendering for Description block (row 3 col 1)
+        float descBlockX = col1X;
+        float descBlockY = pageHeight - margin - rowHeights[0] - rowHeights[1] - rowHeights[2];
+        float descBlockW = 2*colWidth;
+        float descBlockH = rowHeights[2];
+        float descLabelFontSize = 8f;
+        float descValueFontSize = 0.15f * INCH; // 10.8 pts
+        float descPadding = 3f;
+
+        // Bold label 'Description' at top left
+        cs.beginText();
+        cs.setFont(PDType1Font.HELVETICA_BOLD, descLabelFontSize);
+        cs.newLineAtOffset(descBlockX + descPadding, descBlockY + descBlockH - descLabelFontSize - descPadding);
+        cs.showText("Description");
+        cs.endText();
+
+        // Center value in block, both horizontally and vertically
+        String descValue = root.get("partDescription").asText();
+        float valueWidth = descValue.length() * descValueFontSize * 0.6f; // rough estimate
+        float valueX = descBlockX + (descBlockW - valueWidth) / 2f;
+        float valueY = descBlockY + (descBlockH - descValueFontSize) / 2f;
+        cs.beginText();
+        cs.setFont(PDType1Font.HELVETICA_BOLD, descValueFontSize);
+        cs.newLineAtOffset(valueX, valueY);
+        cs.showText(descValue);
+        cs.endText();
+            // Custom rendering for row 3 col 2 info block: keys with values below each key
+            float infoBlockX = col3X;
+            float infoBlockY = pageHeight - margin - rowHeights[0] - rowHeights[1] - rowHeights[2];
+            float infoBlockW = colWidth;
+            float infoBlockH = rowHeights[2];
+            float infoFontSizePts = 0.08f * INCH; // 0.08 inches -> 5.76 pts
+            float infoPadding = 4f; // even less horizontal padding
+            float infoColGap = 40f; // even less gap between columns
+            float infoLineHeight = infoFontSizePts + 1.5f; // even less vertical gap between rows
+            float infoKeyValueGap = 1f; // even less gap between key and value
+            // column x positions: three columns with horizontal gaps
+            float infoCol1X = infoBlockX + infoPadding;
+            float infoCol2X = infoCol1X + infoColGap;
+            float infoCol3X = infoCol2X + infoColGap;
+
+            // PO No.
+            float yBase = infoBlockY + infoBlockH - infoPadding - infoFontSizePts;
+
+            // PO NO.
+            cs.beginText();
+            cs.setFont(PDType1Font.HELVETICA, infoFontSizePts);
+            cs.newLineAtOffset(infoCol1X, yBase);
+            cs.showText("PO NO.");
+            cs.endText();
+            cs.beginText();
+            cs.setFont(PDType1Font.HELVETICA, infoFontSizePts);
+            cs.newLineAtOffset(infoCol1X, yBase - infoFontSizePts - infoKeyValueGap);
+            cs.showText(root.get("poNumber").asText());
+            cs.endText();
+
+            // PO LINE NO.
+            cs.beginText();
+            cs.setFont(PDType1Font.HELVETICA, infoFontSizePts);
+            cs.newLineAtOffset(infoCol2X, yBase);
+            cs.showText("PO LINE NO.");
+            cs.endText();
+            cs.beginText();
+            cs.setFont(PDType1Font.HELVETICA, infoFontSizePts);
+            cs.newLineAtOffset(infoCol2X, yBase - infoFontSizePts - infoKeyValueGap);
+            cs.showText(root.get("poLineNumber").asText());
+            cs.endText();
+
+            // PROD DATE
+            float yProd = yBase - 2 * (infoFontSizePts + infoKeyValueGap) - infoLineHeight;
+            cs.beginText();
+            cs.setFont(PDType1Font.HELVETICA, infoFontSizePts);
+            cs.newLineAtOffset(infoCol1X, yProd);
+            cs.showText("PROD DATE");
+            cs.endText();
+            cs.beginText();
+            cs.setFont(PDType1Font.HELVETICA, infoFontSizePts);
+            cs.newLineAtOffset(infoCol1X, yProd - infoFontSizePts - infoKeyValueGap);
+            cs.showText(root.get("productionDate").asText());
+            cs.endText();
+
+            // EXP DATE
+            cs.beginText();
+            cs.setFont(PDType1Font.HELVETICA, infoFontSizePts);
+            cs.newLineAtOffset(infoCol2X, yProd);
+            cs.showText("EXP DATE");
+            cs.endText();
+            cs.beginText();
+            cs.setFont(PDType1Font.HELVETICA, infoFontSizePts);
+            cs.newLineAtOffset(infoCol2X, yProd - infoFontSizePts - infoKeyValueGap);
+            cs.showText(root.get("expirationDate").asText());
+            cs.endText();
+
+            // LOT NO., QML, PCD (last line, more gap between columns)
+            float yLot = yProd - 2 * (infoFontSizePts + infoKeyValueGap) - infoLineHeight;
+            float lastColGap1 = infoColGap + 20f; // gap between LOT NO. and QML
+            float lastColGap2 = infoColGap + 8f;  // smaller gap between QML and PCD
+
+            float lotX = infoCol1X;
+            float qmlX = lotX + lastColGap1;
+            float pcdX = qmlX + lastColGap2;
+
+            // LOT NO.
+            cs.beginText();
+            cs.setFont(PDType1Font.HELVETICA, infoFontSizePts);
+            cs.newLineAtOffset(lotX, yLot);
+            cs.showText("LOT NO.");
+            cs.endText();
+            cs.beginText();
+            cs.setFont(PDType1Font.HELVETICA, infoFontSizePts);
+            cs.newLineAtOffset(lotX, yLot - infoFontSizePts - infoKeyValueGap);
+            cs.showText(root.get("lotNumber").asText());
+            cs.endText();
+
+            // QML
+            cs.beginText();
+            cs.setFont(PDType1Font.HELVETICA, infoFontSizePts);
+            cs.newLineAtOffset(qmlX, yLot);
+            cs.showText("QML");
+            cs.endText();
+            cs.beginText();
+            cs.setFont(PDType1Font.HELVETICA, infoFontSizePts);
+            cs.newLineAtOffset(qmlX, yLot - infoFontSizePts - infoKeyValueGap);
+            cs.showText(root.get("qml").asText());
+            cs.endText();
+
+            // PCD
+            cs.beginText();
+            cs.setFont(PDType1Font.HELVETICA, infoFontSizePts);
+            cs.newLineAtOffset(pcdX, yLot);
+            cs.showText("PCD");
+            cs.endText();
+            cs.beginText();
+            cs.setFont(PDType1Font.HELVETICA, infoFontSizePts);
+            cs.newLineAtOffset(pcdX, yLot - infoFontSizePts - infoKeyValueGap);
+            cs.showText(root.get("pcd").asText());
+            cs.endText();
 
             // -------- Draw Row 4: 2 columns --------
                 drawCustomGrid(cs, margin, pageHeight - margin - rowHeights[0] - rowHeights[1] - rowHeights[2] - rowHeights[3], new float[]{2*colWidth, colWidth}, rowHeights[3]);
-            drawTextAndBarcode(cs, "LPN (1J)", root.get("lpn_1j").asText(), root.get("lpn_1j").asText(),
-                    doc, col1X, pageHeight - margin - rowHeights[0] - rowHeights[1] - rowHeights[2] - rowHeights[3],
-                    2*colWidth, rowHeights[3], 6);
-            drawText(cs, "Supplier Internal Tracking", root.get("serialNumber").asText(),
-                    col3X, pageHeight - margin - rowHeights[0] - rowHeights[1] - rowHeights[2] - rowHeights[3],
-                    colWidth, rowHeights[3], 6);
+            // Custom rendering for row 4 col 1: remove LPN, keep bold (1J), value above barcode, size 0.12 inches bold
+            float lpnBlockX = col1X;
+            float lpnBlockY = pageHeight - margin - rowHeights[0] - rowHeights[1] - rowHeights[2] - rowHeights[3];
+            float lpnBlockW = 2*colWidth;
+            float lpnBlockH = rowHeights[3];
+            float lpnPadding = 8f;
+            float lpnLabelFontSize = 8f;
+            float lpnValueFontSize = 0.12f * INCH; // 8.64 pts
+            float lpnLineHeight = lpnLabelFontSize + 2;
+
+            // Draw bold (1J) at top left
+            cs.beginText();
+            cs.setFont(PDType1Font.HELVETICA_BOLD, lpnLabelFontSize);
+            cs.newLineAtOffset(lpnBlockX + lpnPadding, lpnBlockY + lpnBlockH - lpnLineHeight - 3f);
+            cs.showText("(1J)");
+            cs.endText();
+
+            // Draw value above barcode, centered horizontally, at 0.12 inches (8.64 pts) bold
+            String lpnValue = root.get("lpn_1j").asText();
+            float lpnValueWidth = lpnValue.length() * lpnValueFontSize * 0.6f; // rough estimate
+            float lpnValueX = lpnBlockX + (lpnBlockW - lpnValueWidth) / 2f;
+            float lpnValueY = lpnBlockY + lpnBlockH/2f + lpnValueFontSize;
+            cs.beginText();
+            cs.setFont(PDType1Font.HELVETICA_BOLD, lpnValueFontSize);
+            cs.newLineAtOffset(lpnValueX, lpnValueY);
+            cs.showText(lpnValue);
+            cs.endText();
+
+            // Draw barcode for LPN value below
+            String lpnBarcodeData = lpnValue;
+            float lpnBarcodeHeight = 0.5f * INCH;
+            float lpnBarcodeWidth = lpnBlockW - 2*lpnPadding - 2*0.25f*INCH;
+            BitMatrix lpnMatrix = new MultiFormatWriter().encode(lpnBarcodeData, BarcodeFormat.CODE_128,
+                (int)lpnBarcodeWidth, (int)lpnBarcodeHeight);
+            BufferedImage lpnImage = MatrixToImageWriter.toBufferedImage(lpnMatrix);
+            PDImageXObject lpnPdImage = PDImageXObject.createFromByteArray(doc, toByteArray(lpnImage), "barcode");
+            cs.drawImage(lpnPdImage, lpnBlockX + lpnPadding, lpnBlockY + 3f, lpnBarcodeWidth, lpnBarcodeHeight);
+            // 'Supplier internal' at top center, not bold
+            float supBlockX = col3X;
+            float supBlockY = pageHeight - margin - rowHeights[0] - rowHeights[1] - rowHeights[2] - rowHeights[3];
+            float supBlockW = colWidth;
+            float supBlockH = rowHeights[3];
+            String supText = "Supplier internal";
+            float supFontSize = 8f;
+            float supTextWidth = supText.length() * supFontSize * 0.6f; // rough estimate
+            float supTextX = supBlockX + (supBlockW - supTextWidth) / 2f;
+            float supTextY = supBlockY + supBlockH - supFontSize - 6f; // near top
+            cs.beginText();
+            cs.setFont(PDType1Font.HELVETICA, supFontSize);
+            cs.newLineAtOffset(supTextX, supTextY);
+            cs.showText(supText);
+            cs.endText();
 
             cs.close();
             doc.save("rivian_label.pdf");
