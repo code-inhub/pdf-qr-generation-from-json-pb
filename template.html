@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8"/>
+  <style>
+    @page { size: 6in 4in; margin: 0; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 6in;
+      height: 4in;
+      font-family: Arial, Helvetica, sans-serif;
+      box-sizing: border-box;
+    }
+    table.outer {
+      width: 100%;
+      height: 100%;
+      border-collapse: collapse;
+      border: 1px solid #000;
+      table-layout: fixed;
+    }
+    tr { height: 1in; }
+    td {
+      border: 1px solid #000;
+      padding: 0.05in;
+      vertical-align: top;
+      height: 1in;
+      box-sizing: border-box;
+    }
+    .qr {
+      width: 0.75in;
+      height: 0.75in;
+      display: block;
+      margin: auto;
+    }
+    .barcode {
+      display: block;
+      margin-top: 0.05in;
+      height: 0.5in;
+      width: auto;
+      padding: 0.025in;
+      box-sizing: border-box;
+    }
+    .section-title {
+      font-weight: bold;
+      font-size: 0.12in;
+      margin-bottom: 0.02in;
+    }
+    .ship-from { font-size: 0.08in; }
+    .ship-to { font-size: 0.10in; }
+    .pn-qty { font-size: 0.15in; font-weight: bold; }
+    .description { font-size: 0.12in; }
+    .small-text { font-size: 0.08in; }
+    .inner-table td {
+      border: none;
+      padding: 0.05in;
+      vertical-align: top;
+      font-size: 0.08in;
+    }
+  </style>
+</head>
+<body>
+  <table class="outer">
+
+    <!-- Row 1: Ship From / Ship To / QR -->
+    <tr>
+      <td style="width: 2in;">
+        <div class="section-title ship-from">SHIP FROM:</div>
+        <div class="ship-from">
+          <span th:text="${shipFrom.name}"></span><br/>
+          <span th:text="${shipFrom.addressLine1}"></span><br/>
+          <span th:text="${shipFrom.addressLine2}"></span><br/>
+          <span th:text="${shipFrom.supplierCode}"></span><br/>
+          COO: <span th:text="${shipFrom.countryOfOrigin}"></span>
+        </div>
+      </td>
+      <td style="width: 2in;">
+        <div class="section-title ship-to">SHIP TO:</div>
+        <div class="ship-to">
+          <span th:text="${shipTo.name}"></span><br/>
+          <span th:text="${shipTo.addressLine1}"></span><br/>
+          <span th:text="${shipTo.addressLine2}"></span><br/>
+          <span style="font-style: italic;" th:text="${shipTo.plant} + ' - ' + ${shipTo.sLoc}"></span>
+        </div>
+      </td>
+      <td style="width: 2in; text-align:center;">
+        <img th:src="@{${qrCodePath}}" alt="QR Code" class="qr"/>
+      </td>
+    </tr>
+
+    <!-- Row 2: Part Number and Quantity -->
+    <tr>
+      <td colspan="2">
+        <div class="section-title">P/N</div>
+        <div class="section-title">(P)</div>
+        <span class="pn-qty" th:text="${partNumber}"></span>
+        <img th:src="@{${partNumberBarcodePath}}" alt="P/N Barcode" class="barcode" style="width:2.25in;"/>
+      </td>
+      <td>
+        <div class="section-title">QTY (Q)</div>
+        <span class="pn-qty" th:text="${quantity}"></span>
+        <img th:src="@{${quantityBarcodePath}}" alt="Qty Barcode" class="barcode" style="width:1.25in;"/>
+      </td>
+    </tr>
+
+    <!-- Row 3: Description / PO & Misc -->
+    <tr>
+      <td colspan="2">
+        <div class="section-title description">DESCRIPTION</div>
+        <div class="description" th:text="${description}"></div>
+      </td>
+      <td style="padding: 0;">
+        <table class="inner-table" style="width: 100%; height: 100%; border-collapse: collapse;">
+          <tr>
+            <td>
+              <div class="small-text">PO NO.</div> <span th:text="${poNumber}"></span><br/>
+              <div class="small-text">PROD DATE</div> <span th:text="${productionDate}"></span><br/>
+              <div class="small-text">LOT NO.</div> <span th:text="${lotNumber}"></span>
+            </td>
+            <td>
+              <div class="small-text">PO LINE NO.</div> <span th:text="${poLineNumber}"></span><br/>
+              <div class="small-text">EXP DATE</div> <span th:text="${expirationDate}"></span><br/>
+              <div class="small-text">QML</div> <span th:text="${qml}"></span><br/>
+              <div class="small-text">PCD</div> <span th:text="${pcd}"></span>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- Row 4: LPN / Supplier Internal -->
+    <tr>
+      <td colspan="2">
+        <div class="section-title">(1J)</div>
+        <span class="pn-qty" th:text="${lpn}"></span>
+        <img th:src="@{${lpnBarcodePath}}" alt="LPN Barcode" class="barcode" style="width:2.25in;"/>
+      </td>
+      <td>
+        <div class="section-title small-text">Supplier Internal Tracking</div>
+        <span th:text="${supplierInternal}"></span>
+      </td>
+    </tr>
+
+  </table>
+</body>
+</html>
