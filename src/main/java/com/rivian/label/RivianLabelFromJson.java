@@ -23,7 +23,7 @@ public class RivianLabelFromJson {
     public static void main(String[] args) {
         try {
             ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(new File("src/input_master.json"));
+            JsonNode root = mapper.readTree(new File("src/input_mixed.json"));
 
             
             JsonNode labelNode;
@@ -56,7 +56,7 @@ public class RivianLabelFromJson {
             } else if (labelType.equals("master")) {
                 drawMasterLabel(cs, doc, labelNode, pageWidth, pageHeight, margin);
             } else if (labelType.equals("mixed")) {
-                drawContainerLabel(cs, doc, labelNode, pageWidth, pageHeight, margin);
+                drawMixedLabel(cs, doc, labelNode, pageWidth, pageHeight, margin);
             }
 
 
@@ -69,6 +69,97 @@ public class RivianLabelFromJson {
             e.printStackTrace();
         }
     }
+
+
+    private static void drawMixedLabel(PDPageContentStream cs, PDDocument doc, JsonNode node,
+                                   float pageWidth, float pageHeight, float margin) throws Exception {
+
+    // Define row heights
+    float row1H = (pageHeight - 2 * margin) / 4f;      // 1/4 height
+    float row2H = (pageHeight - 2 * margin) / 4f;      // 1/4 height
+    float row3H = (pageHeight - 2 * margin) / 2f;      // 2/4 height
+
+    float currentY = pageHeight - margin;  // Start from top
+
+    // ---------------- ROW 1: Single column with "MIXED" ----------------
+    float r1Y = currentY - row1H;
+    drawCustomGrid(cs, margin, r1Y, new float[]{pageWidth - 2 * margin}, row1H);
+
+    // Draw "MIXED" in the center
+    cs.beginText();
+    cs.setFont(PDType1Font.HELVETICA_BOLD, 0.9f * INCH); // 1 LPB standard
+    float textWidth = PDType1Font.HELVETICA_BOLD.getStringWidth("MIXED") / 1000f * 0.9f * INCH;
+    cs.newLineAtOffset(margin + ((pageWidth - 2 * margin - textWidth) / 2f),
+            r1Y + (row1H - 0.9f * INCH) / 2f);
+    cs.showText("MIXED");
+    cs.endText();
+
+    currentY = r1Y;
+
+    // ---------------- ROW 2: Three equal columns ----------------
+    float r2Y = currentY - row2H;
+    float colWidth = (pageWidth - 2 * margin) / 3f;
+    drawCustomGrid(cs, margin, r2Y, new float[]{colWidth, colWidth, colWidth}, row2H);
+
+    // Column X positions
+    float col1X = margin;
+    float col2X = margin + colWidth;
+    float col3X = margin + 2 * colWidth;
+
+    // Ship From (smaller font: 1-2 LPB smaller)
+    drawAddress(cs, node.get("ship_from"), "Ship From", col1X, r2Y, colWidth, row2H, (int)(0.08f * INCH));
+
+    // Ship To (larger font: 1-2 LPB larger)
+    drawAddress(cs, node.get("ship_to"), "Ship To", col2X, r2Y, colWidth, row2H, (int)(0.10f * INCH));
+
+    // Ship Date (human readable 8 LPB ~ 0.08in)
+    cs.beginText();
+    cs.setFont(PDType1Font.HELVETICA, 0.08f * INCH);
+    cs.newLineAtOffset(col3X + 5, r2Y + row2H - 20);
+    cs.showText("Ship Date: " + getJsonText(node, "shipDate"));
+    cs.endText();
+
+    currentY = r2Y;
+
+    // ---------------- ROW 3: Single column with PKG ID and barcode ----------------
+    float r3Y = currentY - row3H;
+    drawCustomGrid(cs, margin, r3Y, new float[]{pageWidth - 2 * margin}, row3H);
+
+    String pkgId = getJsonText(node, "pkg_id");
+    float pkgFontSize = 0.40f * INCH;
+    textWidth = (PDType1Font.HELVETICA_BOLD.getStringWidth(pkgId) / 1000) * pkgFontSize;
+    
+    
+    cs.beginText();
+    cs.setFont(PDType1Font.HELVETICA, 8);
+    cs.newLineAtOffset(col1X + 5, r3Y + row3H - ( 0.15f* INCH ));
+    cs.showText("PKG ID");
+    cs.endText();
+    
+    cs.beginText();
+    cs.setFont(PDType1Font.HELVETICA, 8);
+    cs.newLineAtOffset(col1X + 5, r3Y + row3H - ( 0.15f* INCH )-9);
+    cs.showText("MIXED (5J)");
+    cs.endText();
+
+    // PKG ID text
+    cs.beginText();
+    cs.setFont(PDType1Font.HELVETICA_BOLD, pkgFontSize);
+    cs.newLineAtOffset(margin + ((pageWidth - 2 * margin - textWidth) / 2f),
+            r3Y + row3H - 40);
+    cs.showText(pkgId);
+    cs.endText();
+
+    // Barcode below
+    float barcodeHeight = 0.5f * INCH; // min 0.5"
+    float barcodeWidth = pageWidth - 2 * margin - 36f; // leave quiet zone ~0.25" on sides
+    BitMatrix pkgMatrix = new MultiFormatWriter().encode(pkgId.replaceAll(" ", ""), BarcodeFormat.CODE_128,
+            (int)barcodeWidth, (int)barcodeHeight);
+    BufferedImage pkgImg = MatrixToImageWriter.toBufferedImage(pkgMatrix);
+    PDImageXObject pkgPdImg = PDImageXObject.createFromByteArray(doc, toByteArray(pkgImg), "pkg_barcode");
+    cs.drawImage(pkgPdImg, margin + 18f, r3Y + 20, barcodeWidth, barcodeHeight);
+}
+
 
     private static void drawMasterLabel(PDPageContentStream cs, PDDocument doc, JsonNode node,
     float pageWidth, float pageHeight, float margin) throws Exception {
