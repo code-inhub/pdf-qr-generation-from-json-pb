@@ -136,7 +136,7 @@ cs.endText();
 
     cs.beginText();
     cs.setFont(PDType1Font.HELVETICA, 8);
-    cs.newLineAtOffset(col1X + 5, r3y + rowHeight - ( 0.10f* INCH ));
+    cs.newLineAtOffset(col1X + 5, r3y + rowHeight - ( 0.15f* INCH ));
     cs.showText("Description");
     cs.endText();
 
@@ -155,7 +155,7 @@ startY = r3y + rowHeight - qtyFontSize - 20;
 
      cs.beginText();
     cs.setFont(PDType1Font.HELVETICA, 8);
-    cs.newLineAtOffset(col2X + 5, r3y + rowHeight - ( 0.10f* INCH ));
+    cs.newLineAtOffset(col2X + 5, r3y + rowHeight - ( 0.15f* INCH ));
     cs.showText("QTY");
     cs.endText();
     
@@ -171,19 +171,27 @@ startY = r3y + rowHeight - qtyFontSize - 20;
 
     // Left col: PKG ID + barcode
     String pkgId = getJsonText(node, "pkg_id");
+
     float pkgFontSize = 0.25f * INCH;
+    textWidth = (PDType1Font.HELVETICA_BOLD.getStringWidth(pkgId) / 1000) * pkgFontSize;
     startX = col1X + (col1W - textWidth) / 2f;  // center horizontally
-startY = r4y + rowHeight - pkgFontSize - 20;
+    startY = r4y + rowHeight - pkgFontSize - 10;
 
 cs.beginText();
     cs.setFont(PDType1Font.HELVETICA, 8);
-    cs.newLineAtOffset(col1X + 5, r4y + rowHeight - ( 0.10f* INCH ) );
+    cs.newLineAtOffset(col1X + 5, r4y + rowHeight - ( 0.15f* INCH ) );
     cs.showText("PKG ID");
     cs.endText();
 
     cs.beginText();
+    cs.setFont(PDType1Font.HELVETICA, 8);
+    cs.newLineAtOffset(col1X + 5, r4y + rowHeight - ( 0.15f* INCH ) - 9 );
+    cs.showText("MASTER (2J)");
+    cs.endText();
+    
+    cs.beginText();
     cs.setFont(PDType1Font.HELVETICA_BOLD, pkgFontSize);
-    cs.newLineAtOffset(col1X + 20, r4y + rowHeight - 20);
+    cs.newLineAtOffset(startX, startY);
     cs.showText(pkgId);
     cs.endText();
 
