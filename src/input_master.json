@@ -1,0 +1,24 @@
+{
+  "master_label": {
+    "ship_from": {
+      "name": "XYZ COMPANY",
+      "addressLine1": "345 SOUTH STREET",
+      "addressLine2": "PLYMOUTH, MI 48170",
+      "supplierCode": "12345",
+      "countryOfOrigin": "USA"
+    },
+    "ship_to": {
+      "name": "RIVIAN",
+      "addressLine1": "100 N RIVIAN MOTORWAY",
+      "addressLine2": "NORMAL, IL 61761",
+      "plant": "3100",
+      "sLoc": "NR01"
+    },
+    "pkg_id": "2J5124509271900001",
+    "poNumber": "5500000001",
+    "partNumber": "PT00001234-A",
+    "partDescription": "FOG LAMP FR FASCIA, RR",
+    "quantity": "1000",
+    "shipDate": "2022-10-22"
+  }
+}
